@@ -1,7 +1,7 @@
 # web-420
 WEB 420 RESTFul APIs
 
-# H1 WEB 420 RESTful APIs
-## H2 Contributors
+# WEB 420 RESTful APIs
+## Contributors
 * Richard Krasso
 * Angelica Gutierrez 
