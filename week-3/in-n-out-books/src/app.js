@@ -67,6 +67,36 @@ app.get("/", async (req, res, next) => {
   res.send(html); // Sends the HTML content to the client
 });
 
+// GET route at /api/books that returns an array of books from the mock database.
+// Use a try-catch block to handle any errors.
+app.get('/api/books', async (req, res) => {
+  try {
+      const allBooks = await books.find();
+      res.json(allBooks);
+  } catch (error) {
+      res.status(500).json({ error: 'An error occurred while fetching books' });
+  }
+});
+
+// A GET route at /api/books/:id that returns a single book with the matching id from the mock database.
+// Use a try-catch block to handle any errors.
+// Add error handling to check if the id is not a number and throwing a 400 error if it is not with an error message.
+app.get('/api/books/:id', async (req, res) => {
+  try {
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) {
+          return res.status(400).json({ error: 'Invalid book ID' });
+      }
+      const book = await books.findOne({ id });
+      if (!book) {
+          return res.status(404).json({ error: 'Book not found' });
+      }
+      res.json(book);
+  } catch (error) {
+      res.status(500).json({ error: 'An error occurred while fetching the book' });
+  }
+});
+
 // Middleware functions
 // 404 Error
 app.use((req, res, next) => {
