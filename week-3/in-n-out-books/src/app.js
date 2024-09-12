@@ -97,6 +97,47 @@ app.get('/api/books/:id', async (req, res) => {
   }
 });
 
+// A POST route at /api/books that adds a new book to the mock database and returns a 201-status code.
+// Use a try-catch block to handle any errors (checking if the book title is missing and throwing a 400 error if it is)
+// Include a message that is appropriate for the 400 error.
+app.post("/api/books", async (req, res, next) => {
+  try {
+    const newBook = req.body;
+    const expectedKeys = ["id", "title", "author"];
+    const receivedKeys = Object.keys(newBook);
+
+    if (!receivedKeys.every(key => expectedKeys.includes(key)) ||
+      receivedKeys.length !== expectedKeys.length) {
+      console.error("Bad Request: Missing keys or extra keys", receivedKeys);
+      return next(createError(400, "Bad Request"));
+    }
+
+    const result = await books.insertOne(newBook);
+    console.log("Result: ", result);
+    res.status(201).send({ id: result.ops[0].id });
+  } catch (err) {
+    console.error("Error: ", err.message);
+    next(err);
+  }
+});
+
+// A DELETE route at /api/books/:id that deletes a book with the matching id from the mock database and returns a 204-status code.
+// Use a try-catch block to handle any errors.
+app.delete("/api/books/:id", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const result = await books.deleteOne({ id: parseInt(id) });
+    console.log("Result: ", result);
+    res.status(204).send();
+  } catch (err) {
+    if (err.message === "No matching item found") {
+      return next(createError(404, "Book not found"));
+    }
+    console.error("Error: ", err.message);
+    next(err);
+  }
+});
+
 // Middleware functions
 // 404 Error
 app.use((req, res, next) => {
