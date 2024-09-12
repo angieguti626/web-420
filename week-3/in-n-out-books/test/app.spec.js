@@ -16,6 +16,12 @@ describe('Chapter 3: API Tests', () => {
 
     expect(res.statusCode).toEqual(200);
     expect(res.body).toBeInstanceOf(Array);
+
+    res.body.forEach((book) => {
+      expect(book).toHaveProperty("id");
+      expect(book).toHaveProperty("title");
+      expect(book).toHaveProperty("author");
+    });
   });
 
   // Should return a single book using ID.
@@ -24,6 +30,8 @@ describe('Chapter 3: API Tests', () => {
 
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty("id", 1);
+    expect(res.body).toHaveProperty("title", "The Fellowship of the Ring");
+    expect(res.body).toHaveProperty("author", "J.R.R. Tolkien");
   });
 
   // Should return error if the ID is invalid.
@@ -31,7 +39,7 @@ describe('Chapter 3: API Tests', () => {
     const res = await request(app).get('/api/books/abc');
 
     expect(res.statusCode).toEqual(400);
-    expect(res.body).toHaveProperty('error', 'Invalid book ID');
+    expect(res.body.message).toEqual("Input must be a number");
   });
 });
 
