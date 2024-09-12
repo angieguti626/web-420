@@ -1,6 +1,6 @@
 /**
  * Author: Angelica Gutierrez
- * Date: 1 September 2024
+ * Date: 15 September 2024
  * File Name: app.js
  * Description: In-N-Out Books App
  */
@@ -9,6 +9,9 @@
 const express = require("express");
 const app = express(); // Creates an Express application
 
+const books = require("../database/books");
+
+
 app.use(express.json()); // parse incoming requests as JSON payloads
 app.use(express.urlencoded({ extended: true })); // parsing incoming urlencoded payloads
 app.use(express.static('public'));
@@ -16,7 +19,7 @@ app.use(express.static('public'));
 // GET route for the root URL (“/”)
 app.get("/", async (req, res, next) => {
   // HTML content for the landing page
-  const html =`
+  const html = `
     <html>
       <head>
         <title>In-N-Out Books</title>
@@ -71,10 +74,12 @@ app.get("/", async (req, res, next) => {
 // Use a try-catch block to handle any errors.
 app.get('/api/books', async (req, res) => {
   try {
-      const allBooks = await books.find();
-      res.json(allBooks);
-  } catch (error) {
-      res.status(500).json({ error: 'An error occurred while fetching books' });
+    const allBooks = await books.find();
+    console.log("Book Titles: ", allBooks); // Logs all books
+    res.send(allBooks); // Sends response with all books
+  } catch (err) {
+    console.error("Error: ", err.message); // Logs error message
+    next(err); // Passes error to the next middleware
   }
 });
 
@@ -83,17 +88,19 @@ app.get('/api/books', async (req, res) => {
 // Add error handling to check if the id is not a number and throwing a 400 error if it is not with an error message.
 app.get('/api/books/:id', async (req, res) => {
   try {
-      const id = parseInt(req.params.id, 10);
-      if (isNaN(id)) {
-          return res.status(400).json({ error: 'Invalid book ID' });
-      }
-      const book = await books.findOne({ id });
-      if (!book) {
-          return res.status(404).json({ error: 'Book not found' });
-      }
-      res.json(book);
-  } catch (error) {
-      res.status(500).json({ error: 'An error occurred while fetching the book' });
+    let { id } = req.params;
+    id = parseInt(id);
+
+    if (isNaN(id)) {
+      return next(createError(400, "Input must be a number"));
+    }
+    const book = await books.findOne({ id: id });
+
+    console.log("Book: ", book);
+    res.send(book);
+  } catch (err) {
+    console.error("Error: ", err.message);
+    next(err);
   }
 });
 
@@ -149,7 +156,7 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({
     message: 'Internal Server Error', // return a JSON response with the error details
-    error: process.env.NODE_ENV === 'development' ? err.stack : { } // error stack only if the application is running in development mode
+    error: process.env.NODE_ENV === 'development' ? err.stack : {} // error stack only if the application is running in development mode
   });
 });
 
