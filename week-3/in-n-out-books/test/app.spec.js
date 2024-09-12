@@ -47,18 +47,21 @@ describe('Chapter 3: API Tests', () => {
 describe('Chapter 4: API Tests', () => {
   // Should return a 201-status code when adding a new book.
   it('should return a 201-status code when adding a new book', async () => {
-    const res = await request(app).post('/api/books').send; ({
+    const res = await request(app).post('/api/books').send({
       id: 99,
       title: "Dying Inside",
-      author: "Pete Wentz"
-    })
+      author: "Pete Wentz",
+    });
 
     expect(res.statusCode).toEqual(201);
   });
 
   // Should return a 400-status code when adding a new book with missing title.
   it('should return a 400-status code when adding a new book with missing title', async () => {
-    const res = await request(app).get('/api/books').send;
+    const res = await request(app).post("/api/books").send({
+      id: 100,
+      author: "Pete Wentz",
+    });
 
     expect(res.statusCode).toEqual(400);
     expect(res.body.message).toEqual("Bad Request");
