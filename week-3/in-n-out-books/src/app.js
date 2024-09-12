@@ -8,7 +8,7 @@
 // Setting up an Express application
 const express = require("express");
 const app = express(); // Creates an Express application
-
+const createError = require("http-errors");
 const books = require("../database/books");
 
 
@@ -86,16 +86,14 @@ app.get('/api/books', async (req, res) => {
 // A GET route at /api/books/:id that returns a single book with the matching id from the mock database.
 // Use a try-catch block to handle any errors.
 // Add error handling to check if the id is not a number and throwing a 400 error if it is not with an error message.
-app.get('/api/books/:id', async (req, res) => {
+app.get('/api/books/:id', async (req, res, next) => {
   try {
     let { id } = req.params;
     id = parseInt(id);
-
     if (isNaN(id)) {
       return next(createError(400, "Input must be a number"));
     }
     const book = await books.findOne({ id: id });
-
     console.log("Book: ", book);
     res.send(book);
   } catch (err) {
@@ -147,16 +145,19 @@ app.delete("/api/books/:id", async (req, res, next) => {
 
 // Middleware functions
 // 404 Error
-app.use((req, res, next) => {
-  res.status(404).send('404 Not Found');
+// catch 404 and forward to error handler
+app.use(function (req, res, next) {
+  next(createError(404));
 });
 
-// 500 Error
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
-    message: 'Internal Server Error', // return a JSON response with the error details
-    error: process.env.NODE_ENV === 'development' ? err.stack : {} // error stack only if the application is running in development mode
+// 500 handler
+app.use(function (err, req, res, next) {
+  res.status(err.status || 500);
+  res.json({
+    type: 'error',
+    status: err.status,
+    message: err.message,
+    stack: req.app.get('env') === 'development' ? err.stack : undefined
   });
 });
 
