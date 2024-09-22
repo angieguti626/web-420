@@ -74,3 +74,38 @@ describe('Chapter 4: API Tests', () => {
     expect(res.statusCode).toEqual(204);
   });
 });
+
+// Create a test suite named “Chapter [Number]: API Tests”
+describe('Chapter 5 API Tests', () => {
+  // Should update a book and return a 204-status code
+  it("Should update a book and return a 204-status code", async () => {
+    const res = await request(app).put("/api/books/1").send({
+      title: "Dying Inside",
+      author: "Pete Wentz",
+    });
+
+    expect(res.statusCode).toEqual(204);
+  });
+
+  // Should return a 400-status code when using a non-numeric id
+  it('should return a 400-status code when using a non-numeric id.', async () => {
+    const res = await request(app).put("/api/books/abc").send({
+      title: "Dying Inside",
+      author: "Pete Wentz",
+    });
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body.message).toEqual("Input must be a number");
+  });
+
+  // Should return a 400-status code when updating a book with a missing title
+  it('should return a 400-status code when updating a book with a missing title', async () => {
+    const res = await request(app).put("/api/books/1").send({
+      title: "Dying Inside",
+    });
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body.message).toEqual("Bad Request");
+  });
+
+});
