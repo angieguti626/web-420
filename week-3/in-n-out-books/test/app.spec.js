@@ -1,6 +1,6 @@
 /**
  * Author: Angelica Gutierrez
- * Date: 22 September 2024
+ * Date: 28 September 2024
  * File Name: app.spec.js
  * Description: In-N-Out Books Tests
  */
@@ -107,5 +107,38 @@ describe('Chapter 5 API Tests', () => {
     expect(res.statusCode).toEqual(400);
     expect(res.body.message).toEqual("Bad Request");
   });
-
 });
+
+// Create a test suite named “Chapter [Number]: API Tests”.
+describe('Chapter 6 API Tests', () => {
+  // Should log a user in and return a 200-status with ‘Authentication successful’ message.
+  it("should log a user in and return a 200 status with the message 'Authentication successful'", async () => {
+    const res = await request(app).post("/api/login").send({
+      email: "harry@hogwarts.edu",
+      password: "potter"
+    });
+
+    expect(res.statusCode).toEqual(200);
+    expect(res.body.message).toEqual("Authentication successful");
+  });
+
+  it("should return a 401 status code for invalid password", async () => {
+    const res = await request(app)
+      .post("/api/login")
+      .send({ email: "harry@hogwarts.edu", password: "styles" });
+
+    expect(res.statusCode).toBe(401);
+    expect(res.body.message).toBe("Unauthorized");
+  });
+
+  //  Should return a 400-status code with ‘Bad Request’ when missing email or password.
+  it(' It should return a 400-status code with ‘Bad Request’ when missing email or password.', async () => {
+    const res = await request(app).post("/api/login").send({
+      email: "harry@hogwarts.edu",
+    });
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body.message).toEqual("Bad Request");
+  });
+});
+
