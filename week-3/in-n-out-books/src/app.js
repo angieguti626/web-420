@@ -1,6 +1,6 @@
 /**
  * Author: Angelica Gutierrez
- * Date: 22 September 2024
+ * Date: 28 September 2024
  * File Name: app.js
  * Description: In-N-Out Books App
  */
@@ -8,8 +8,12 @@
 // Setting up an Express application
 const express = require("express");
 const app = express(); // Creates an Express application
+
 const createError = require("http-errors");
+
 const books = require("../database/books");
+const bcrypt = require("bcryptjs");
+const users = require("../database/users");
 
 
 app.use(express.json()); // parse incoming requests as JSON payloads
@@ -170,6 +174,34 @@ app.put("/api/books/:id", async (req, res, next) => {
       console.log("Book not found", err.message);
       return next(createError(404, "Book not found"));
     }
+    console.error("Error: ", err.message);
+    next(err);
+  }
+});
+
+// A POST route at /api/login that logs a user in and returns a 200-status code with ‘Authentication successful’ message.
+// Use a try-catch block to handle any errors,
+// Use the compareSync() method from the bcryptjs npm package to check if the password is valid. If not, throw 401 error
+app.post("/api/login", async (req, res, next) => {
+  try {
+    const user = req.body;
+    const expectedKeys = ["email", "password"];
+    const receivedKeys = Object.keys(user);
+    if (
+      !receivedKeys.every((key) => expectedKeys.includes(key)) ||
+      receivedKeys.length !== expectedKeys.length
+    ) {
+      console.error("Bad Request: Missing keys or extra keys", receivedKeys);
+      return next(createError(400, "Bad Request"));
+    }
+    let storedUser = await users.findOne({ email: user.email });
+    let storedPassword = storedUser.password;
+    if (bcrypt.compareSync(user.password, storedPassword) === false) {
+      return next(createError(401, "Unauthorized"));
+    }
+    res.status(200).send({ message: "Authentication successful" });
+  } catch (err) {
+    console.error("Error: ", err);
     console.error("Error: ", err.message);
     next(err);
   }
