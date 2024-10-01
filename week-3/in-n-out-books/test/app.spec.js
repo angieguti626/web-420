@@ -1,6 +1,6 @@
 /**
  * Author: Angelica Gutierrez
- * Date: 28 September 2024
+ * Date: 6 October 2024
  * File Name: app.spec.js
  * Description: In-N-Out Books Tests
  */
@@ -142,3 +142,50 @@ describe('Chapter 6 API Tests', () => {
   });
 });
 
+// Create a test suite named “Chapter [Number]: API Tests"
+describe("Chapter 7: API Tests", () => {
+  // It should return a 200 status with ‘Security questions successfully answered’ message
+  it("should return a 200 status with 'Security questions successfully answered' message", async () => {
+    const res = await request(app)
+      .post("/api/users/harry@hogwarts.edu/verify-security-question")
+      .send({
+        securityQuestions: [
+          { answer: "Hedwig" },
+          { answer: "Quidditch Through the Ages" },
+          { answer: "Evans" },
+        ],
+      });
+
+    expect(res.statusCode).toEqual(200);
+    expect(res.body.message).toEqual("Security questions successfully answered");
+  });
+
+  // It should return a 400 status code with ‘Bad Request’ message when the request body fails ajv validation.
+  it("should return a 400 status code with ‘Bad Request’ message when the request body fails ajv validation", async () => {
+    const res = await request(app).post("/api/users/hermione@hogwarts.edu/verify-security-question").
+      send({
+        securityQuestions: [
+          { answer: "Crookshanks", question: "What is your pet's name?" },
+          { answer: "Hogwarts: A History", email: "hermione@hogwarts.edu" }
+        ],
+      });
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body.message).toEqual("Bad Request");
+  });
+
+  // It should return a 401 status code with ‘Unauthorized’ message when the security questions are incorrect
+  it("should return 401 status code with ‘Unauthorized’ message when the security questions are incorrect", async () => {
+    const res = await request(app).post("/api/users/ron@hogwarts.edu/verify-security-question").
+      send({
+        securityQuestions: [
+          { answer: "Scabbers" },
+          { answer: "The Quibbler" },
+          { answer: "Evans" }
+        ],
+      });
+
+    expect(res.statusCode).toEqual(401);
+    expect(res.body.message).toEqual("Unauthorized");
+  });
+});
