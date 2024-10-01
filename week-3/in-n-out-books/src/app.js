@@ -1,6 +1,6 @@
 /**
  * Author: Angelica Gutierrez
- * Date: 28 September 2024
+ * Date: 6 October 2024
  * File Name: app.js
  * Description: In-N-Out Books App
  */
@@ -19,6 +19,29 @@ const users = require("../database/users");
 app.use(express.json()); // parse incoming requests as JSON payloads
 app.use(express.urlencoded({ extended: true })); // parsing incoming urlencoded payloads
 app.use(express.static('public'));
+
+// Require statement for the ajv npm package
+const Ajv = require("ajv");
+const ajv = new Ajv();
+const securityQuestionsSchema = {
+  type: "object",
+  properties: {
+    newPassword: { type: "string" },
+    securityQuestions: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          answer: { type: "string" },
+        },
+        required: ["answer"],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ["securityQuestions"],
+  additionalProperties: false,
+};
 
 // GET route for the root URL (“/”)
 app.get("/", async (req, res, next) => {
@@ -202,6 +225,69 @@ app.post("/api/login", async (req, res, next) => {
     res.status(200).send({ message: "Authentication successful" });
   } catch (err) {
     console.error("Error: ", err);
+    console.error("Error: ", err.message);
+    next(err);
+  }
+});
+
+// A POST route at /api/login that logs a user in and returns a 200-status code with ‘Authentication successful’ message.
+// Use a try-catch block to handle any errors,
+// Use the compareSync() method from the bcryptjs npm package to check if the password is valid. If not, throw 401 error
+app.post("/api/login", async (req, res, next) => {
+  try {
+    const user = req.body;
+    const expectedKeys = ["email", "password"];
+    const receivedKeys = Object.keys(user);
+    if (
+      !receivedKeys.every((key) => expectedKeys.includes(key)) ||
+      receivedKeys.length !== expectedKeys.length
+    ) {
+      console.error("Bad Request: Missing keys or extra keys", receivedKeys);
+      return next(createError(400, "Bad Request"));
+    }
+    let storedUser = await users.findOne({ email: user.email });
+    let storedPassword = storedUser.password;
+    if (bcrypt.compareSync(user.password, storedPassword) === false) {
+      return next(createError(401, "Unauthorized"));
+    }
+    res.status(200).send({ message: "Authentication successful" });
+  } catch (err) {
+    console.error("Error: ", err);
+    console.error("Error: ", err.message);
+    next(err);
+  }
+});
+
+// A POST route at /api/users/:email/verify-security-question that verifies security questions and returns 200 with ‘Security questions successfully answered’
+// Use a try-catch block to handle any errors, including checking if the request body fails ajv validation and throwing a 400 error if it does with applicable message.
+// If answers do not match the mock database, throw a 401 error with ‘Unauthorized’
+app.post("/api/users/:email/verify-security-question", async (req, res, next) => {
+  try {
+    const { email } = req.params;
+    const { securityQuestions } = req.body;
+    const validate = ajv.compile(securityQuestionsSchema);
+    const valid = validate(req.body);
+
+    if (!valid) {
+      console.error("Bad Request: Invalid request body", validate.errors);
+      return next(createError(400, "Bad Request"));
+    }
+    const user = await users.findOne({ email: email });
+    if (
+      securityQuestions[0].answer !== user.securityQuestions[0].answer ||
+      securityQuestions[1].answer !== user.securityQuestions[1].answer ||
+      securityQuestions[2].answer !== user.securityQuestions[2].answer
+    ) {
+      console.error("Unauthorized");
+      return next(createError(401, "Unauthorized"));
+    }
+
+    const result = await users.updateOne({ email: email }, { user });
+    console.log("Result: ", result);
+    res
+      .status(200)
+      .send({ message: "Security questions successfully answered", user: user });
+  } catch (err) {
     console.error("Error: ", err.message);
     next(err);
   }
