@@ -1,6 +1,6 @@
 /**
  * Author: Angelica Gutierrez
- * Date: 6 October 2024
+ * Date: 13 October 2024
  * File Name: app.js
  * Description: In-N-Out Books App
  */
